@@ -15,6 +15,8 @@ Fract(1,2) + (2 * Fract(1, 3))
 
 1.+(2) // 1 + 2
 
-1~2 + 2~3 * 2
+1\2 + 2\3 * 2
 
 if(f1 > f2) println("f1 greater f2") else println("f2 greater f1")
+
+printSomething

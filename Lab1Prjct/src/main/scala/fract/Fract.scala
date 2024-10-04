@@ -33,7 +33,7 @@ final class Fract(val n: Int,  val d: Int) extends Ordered[Fract] {
   def compare(that: Fract): Int =
     Integer.compare(this.n * that.d, that.n * this.d)
 
-  override def toString: String = s"$n/$d"
+  override def toString: String = s"$n\\$d"
 
   override def hashCode: Int = Objects.hash(n, d)
 
@@ -62,9 +62,8 @@ extension (n: Int) {
   def *(f: Fract): Fract = Fract(n, 1) * f
   def /(f: Fract): Fract = Fract(n, 1) / f
 
-  def ~ (d: Int): Fract = Fract(n, d)
+  def \ (d: Int): Fract = Fract(n, d)
 }
-
 
 object Fract { // companion object for class Fraction
 
@@ -79,7 +78,7 @@ object Fract { // companion object for class Fraction
 //    new Fract(n / gcd, d / gcd)
   }
 
-  def normalize(x: Int, y: Int) = {
+  private def normalize(x: Int, y: Int) = {
     val gcd = computeGcd(x, y)
     (x / gcd, y / gcd)
   }

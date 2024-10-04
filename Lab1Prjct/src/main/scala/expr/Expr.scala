@@ -23,7 +23,7 @@ def eval(expr: Expr, bds: Map[String, Double]): Double =
   expr match {
     case Lit(v) => v
     case Var(n) if bds.contains(n) => bds(n)
-    case Var(n) => throw new NoSuchElementException(s"No value for $n")     // not functional
+    case Var(n) => throw new NoSuchElementException(s"No value for $n")     // be aware not functional
     case Add(l, r) => eval(l, bds) + eval(r, bds)
     case Mult(l, r) => eval(l, bds) * eval(r, bds)
     case Min(s) => - eval(s, bds)
@@ -40,6 +40,31 @@ def simplify(expr: Expr): Expr =
       (ls, rs) match
         case (Lit(0.0), r) => r
         case (l, Lit(0.0)) => l
-
+        case (l, r) => Add(l, r)
     }
+    case Mult(l, r) => {
+      val ls = simplify(l)
+      val rs = simplify(r)
+      (ls, rs) match
+        case (Lit(0.0), r) => Lit(0.0)
+        case (l, Lit(0.0)) => Lit(0.0)
+        case (Lit(1.0), r) => r
+        case (l, Lit(1.0)) => l
+        case (l, r) => Mult(l, r)
+    }
+    case Min(s) => {
+      val ss = simplify(s)
+      ss match
+        case Lit(v) => Lit(-v)
+        case Min(v) => v
+        case (v) => Min(v)
+    }
+    case Rec(s) => {
+      val ss = simplify(s)
+      ss match
+        case Lit(v) => Lit(1 / v)
+        case Rec(v) => v
+        case (v) => Rec(v)
+    }
+
   }
