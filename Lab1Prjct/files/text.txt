@@ -1,0 +1,4 @@
+this is a text 
+with several lines
+and the fourth line 
+contains Java
