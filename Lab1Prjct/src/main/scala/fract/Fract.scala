@@ -10,6 +10,9 @@ final class Fract(val n: Int,  val d: Int) extends Ordered[Fract] {
 
   import Fract.{computeGcd}
 
+  //
+  val (nn, dd) = Fract.normalize(n, d)
+
   def +(that: Fract): Fract = {
     val cd = this.d * that.d
     Fract(this.n * that.d + that.n * this.d, cd)
@@ -36,12 +39,19 @@ final class Fract(val n: Int,  val d: Int) extends Ordered[Fract] {
 
   override def equals(obj: Any): Boolean = {
 
-    // refactor with pattern matching
-    if (!obj.isInstanceOf[Fract]) false
-    else {
-      val that = obj.asInstanceOf[Fract]
-      this.n == that.n && this.d == that.d
+    // old way
+//    if (!obj.isInstanceOf[Fract]) false
+//    else {
+//      val that = obj.asInstanceOf[Fract]
+//      this.n == that.n && this.d == that.d
+//    }
+
+    // refactored with pattern matching
+    obj match {
+      case that: Fract => this.n == that.n && that.d == this.d
+      case _ => false
     }
+
   }
 }
 
@@ -62,9 +72,18 @@ object Fract { // companion object for class Fraction
   // implicit def int2Fract(n: Int): Fract = Fract(n, 1)
 
   def apply(n: Int, d: Int): Fract = {
-    val gcd = computeGcd(n, d)
-    new Fract(n / gcd, d / gcd)
+    val (nn, dn) = normalize(n, d)
+    new Fract(nn, dn)
+
+//    val gcd = computeGcd(n, d)
+//    new Fract(n / gcd, d / gcd)
   }
+
+  def normalize(x: Int, y: Int) = {
+    val gcd = computeGcd(x, y)
+    (x / gcd, y / gcd)
+  }
+
   def apply(n: Int): Fract = new Fract(n, 1)
 
   def computeGcd(x: Int, y: Int): Int = { // recursive methods need explicit return type

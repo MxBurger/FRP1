@@ -6,8 +6,8 @@ object ExprApp {
 
   def main(args: Array[String]): Unit = {
     println ("Hello World")
-    //val e1 = Add(Lit(1), Min(Var("x")))
-    //println(infix(e1))
+    val e1 = Add(Lit(1), Min(Var("x"))) // (1 + (-x))
+    println(infix(e1))
   }
 
 }
