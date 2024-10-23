@@ -17,19 +17,34 @@ object ResultsAnalysis {
 
     // Task 4.1: List of Results objects
 
-    val resultList : List[Results] = ???
+    val resultList: List[Results] =
+      lines.drop(1)
+        .map(l => l.split(","))
+        .map(arr => arr.map(e => e.trim)) // remove whitespaces
+        .filter(arr => arr.length == 12)
+        .map(arr => Results(arr(0).toInt, arr(1),
+          arr.drop(2).map(p => p.toInt).toVector // no array because they are mutable
+        ))
     println(resultList)
 
     // Task 4.2: Number of solved tasks
 
-    val nSolvedPerStnd : Map[String, Int] = ???
-    println(nSolvedPerStnd )
+    val nSolvedPerStnd: Map[String, Int] =
+      resultList
+        .map(r => (r.name, r.points.count(p => p >= 3))).toMap
+
+    println(nSolvedPerStnd)
 
 
     // Task 4.3: Sufficient tasks solved
 
-    val sufficientSolved : (Set[String], Set[String]) = ???
+    val sufficientSolved: (Set[String], Set[String]) = {
+      val (pos, neg)  = nSolvedPerStnd.partition((name, n) => n >= 8)
+      (pos.keySet, neg.keySet)
+    }
     println(sufficientSolved)
+
+    /*
 
     // Task 4.4: Grading
 
@@ -41,15 +56,26 @@ object ResultsAnalysis {
     val nStudentsWithGrade : Map[Grade, Int] = ???
     println(nStudentsWithGrade)
 
+
+
     // Task 4.6: Number solved per assignment
 
     val nSolvedPerAssnmt : List[(Int, Int)] = ???
     println(nSolvedPerAssnmt)
 
+     */
+
     // Task 4.7.: Average points per assignment
 
-    val avrgPointsPerAssnmt : List[(Int, Double)] = ???
+    val avrgPointsPerAssnmt : Map[Int, Double] =
+      (1 to 10).map(i => {
+        val valids = resultList.map(r => r.points(i - 1)).filter(p => p >= 0)
+        val sum = valids.sum
+        (i, sum.toDouble / valids.size)
+      }).toMap
     println(avrgPointsPerAssnmt)
+
+
 
   }
 
