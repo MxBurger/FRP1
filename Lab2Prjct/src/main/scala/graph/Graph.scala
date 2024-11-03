@@ -26,7 +26,6 @@ trait Graph {
         val d = result(node) + 1
         val updResult = result ++ succs.map(s => (s, d))
 
-
         distsRec(updQueue, updResult)
       }
     }
@@ -57,8 +56,22 @@ trait Graph {
 
   // Task 3.4: Methods compute Values
 
-  // TODO Homework Generic computeValues
-  def computeValues[R](start: N, startValue: R, fn: (N, R) => R) : Map[N, R] = ???
+  def computeValues[R](start: N, startValue: R, fn: (N, R) => R) : Map[N, R] = {
+    def valuesRec(queue: Queue[N], result: Map[N, R]): Map[N, R] = {
+      if (queue.isEmpty) {
+        result
+      }
+      else {
+        val node = queue.head
+        val succs = successors(node).removedAll(queue).removedAll(result.keys)
+        val updatedQueue = queue.tail.appendedAll(succs)
+        val nodeValue = result(node)
+        val updatedResult = result ++ succs.map(s => (s, fn(s, nodeValue)))
+        valuesRec(updatedQueue, updatedResult)
+      }
+    }
+    valuesRec(Queue(start), Map(start -> startValue))
+  }
 
   def computeDistsG(start: N): Map[N, Int] =
     computeValues(start, 0, (n, d) => d + 1)

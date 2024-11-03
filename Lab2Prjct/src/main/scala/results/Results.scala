@@ -44,26 +44,37 @@ object ResultsAnalysis {
     }
     println(sufficientSolved)
 
-    /*
+
 
     // Task 4.4: Grading
 
-    val grades : Map[String, Grade] = ???
+    val grades : Map[String, Grade] = {
+      resultList.map(r => (r.name, computeGrade(r.points))).toMap
+    }
     println(grades)
+
+
 
     // Task 4.5: Grade statistics
 
-    val nStudentsWithGrade : Map[Grade, Int] = ???
+    val nStudentsWithGrade : Map[Grade, Int] = {
+      val grades = resultList.map(r => computeGrade(r.points))
+      grades.groupBy(g => g).map((g, gs) => (g, gs.size))
+    }
     println(nStudentsWithGrade)
 
 
 
     // Task 4.6: Number solved per assignment
 
-    val nSolvedPerAssnmt : List[(Int, Int)] = ???
+    val nSolvedPerAssnmt : List[(Int, Int)] = {
+      (1 to 10).map(i => {
+        val nSolved = resultList.map(r => r.points(i - 1)).count(p => p >= 3)
+        (i, nSolved)
+      }).toList
+    }
     println(nSolvedPerAssnmt)
 
-     */
 
     // Task 4.7.: Average points per assignment
 

@@ -12,13 +12,13 @@ object SimpleGraph extends IntGraph with App {
   val paths = computePaths(1)
   println(paths)
   
-  /*
+
   val distsG = computeDistsG(1)
   println(distsG)
 
   val pathsG = computePathsG(1)
   println(pathsG)
-  */
+
 
 }
 

@@ -1,6 +1,6 @@
 package opt
 
-import expr.{Add, Expr, Lit, Min, Mult, Rec, Var}
+import expr.{Add, BinExpr, Expr, Lit, Min, Mult, Rec, UnyExpr, Var}
 
 import java.util.Scanner
 
