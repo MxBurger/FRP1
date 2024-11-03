@@ -2,15 +2,18 @@ package opt
 
 // Task 5.3: Method option
 
-def option[A](body: => A): Option[A] = ???
-
 object Task5_3App extends App {
 
   val bds: Map[String, Int] = Map("x" -> 1, "y" -> 4, "z" -> 0)
 
   // a)	x / y
 
-  val optXY : Option[Int] = ???
+  val optXY : Option[Int] =
+    option {
+      val x = bds.get("x").get
+      val y = bds.get("u").get
+      x / y
+    }
 
   optXY match {
     case Some(xy) => println(s"x / y = $xy")

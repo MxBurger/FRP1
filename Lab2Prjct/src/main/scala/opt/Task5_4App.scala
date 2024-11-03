@@ -11,8 +11,21 @@ object Task5_4App extends App {
 
   // a) x / y
 
-  val optR1 : Option[Int] = ???
-
+  val optR1 : Option[Int] =
+    bds.get("x").flatMap(x =>
+      bds.get("y").flatMap(y =>
+        option {
+          x / y
+        }
+      )
+    )
+    
+    val optR1d: Option[Int] =
+      bds.get("x").flatMap(x =>
+        bds.get("y").flatMap(y =>
+          option {x / y} )
+      ).filter(r => r != 0)
+  
   optR1 match {
     case Some(r) => println(s"x / y = $r")
     case None => println("x / y failed")

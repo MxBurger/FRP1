@@ -8,6 +8,37 @@ import java.util.Scanner
 
 def evalOption(expr: Expr, bds: Map[String, Double]): Option[Double] = ???
 
+
+def infix(expr: Expr): String = {
+
+  def op(e: Expr) =
+    e match {
+      case Add(_, _) => "+"
+      case Mult(_, _) => "*"
+      case Min(_) => "-"
+      case Rec(_) => "1/"
+      case _ => ""
+    }
+
+  expr match {
+    case Lit(v) => v.toString
+    case Var(n) => n
+    case b: BinExpr => s"(${infix(b.left)} ${op(b)} ${infix(b.right)})"
+    case u: UnyExpr => s"(${op(u)} ${infix(u.sub)})"
+  }
+}
+
+def evalOption(expr: Expr, bds: Map[String, Double]): Option[Double] =
+  expr match {
+    case Lit(v) => Some(v)
+    case Var(n) => bds.get(n)
+    case Add(l, r) => 
+      evalOption(l, bds).flatMap{
+        lv => evalOption(r, bds).map(rv => lv + rv)
+      }
+  }
+
+
 object Task5_5ExprEvalOption extends App {
 
   val bds = Map("x" -> 2.0, "y" -> 3.0, "z" -> 0.0)

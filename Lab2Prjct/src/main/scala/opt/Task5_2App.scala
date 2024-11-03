@@ -8,7 +8,12 @@ object Task5_2App extends App {
 
   val optX = bds.get("x")
 
-  // Pattern matching optX
+  optX match {
+    case Some(0) => println("Zero")
+    case Some(x) if x > 0 => println("Positive")
+    case Some(x) => println("Negative")
+    case None => println("No value")
+  }
 
 }
 
