@@ -6,7 +6,23 @@ import java.util.Scanner
 
 // Task 5.5: Expression evaluation with Option
 
-def evalOption(expr: Expr, bds: Map[String, Double]): Option[Double] = ???
+def evalOption(expr: Expr, bds: Map[String, Double]): Option[Double] =
+  expr match {
+    case Lit(v) => Some(v)
+    case Var(n) => bds.get(n)
+    case Add(l, r) =>
+      evalOption(l, bds).flatMap {
+        lv => evalOption(r, bds).map(rv => lv + rv)
+      }
+    case Mult(l, r) =>
+      evalOption(l, bds).flatMap {
+        lv => evalOption(r, bds).map(rv => lv * rv)
+      }
+    case Min(e) =>
+      evalOption(e, bds).map(v => -v)
+    case Rec(e) =>
+      evalOption(e, bds).filter(_ != 0).map(v => 1 / v)
+  }
 
 
 def infix(expr: Expr): String = {
@@ -27,17 +43,6 @@ def infix(expr: Expr): String = {
     case u: UnyExpr => s"(${op(u)} ${infix(u.sub)})"
   }
 }
-
-def evalOption(expr: Expr, bds: Map[String, Double]): Option[Double] =
-  expr match {
-    case Lit(v) => Some(v)
-    case Var(n) => bds.get(n)
-    case Add(l, r) => 
-      evalOption(l, bds).flatMap{
-        lv => evalOption(r, bds).map(rv => lv + rv)
-      }
-  }
-
 
 object Task5_5ExprEvalOption extends App {
 

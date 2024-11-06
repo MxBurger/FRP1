@@ -19,13 +19,7 @@ object Task5_4App extends App {
         }
       )
     )
-    
-    val optR1d: Option[Int] =
-      bds.get("x").flatMap(x =>
-        bds.get("y").flatMap(y =>
-          option {x / y} )
-      ).filter(r => r != 0)
-  
+
   optR1 match {
     case Some(r) => println(s"x / y = $r")
     case None => println("x / y failed")
@@ -33,7 +27,14 @@ object Task5_4App extends App {
 
   // b) x / z
 
-  val optR2 : Option[Int] = ???
+  val optR2 : Option[Int] =
+    bds.get("x").flatMap(x =>
+      bds.get("z").flatMap(z =>
+        option {
+          x / z
+        }
+      )
+    )
 
   optR2 match {
     case Some(r) => println(s"x / z = $r")
@@ -43,7 +44,14 @@ object Task5_4App extends App {
 
   // c) x / u
 
-  val optR3 : Option[Int] = ???
+  val optR3 : Option[Int] =
+    bds.get("x").flatMap(x =>
+      bds.get("u").flatMap(u =>
+        option {
+          x / u
+        }
+      )
+    )
 
   optR3 match {
     case Some(r) => println(s"x / u = $r")
@@ -52,7 +60,16 @@ object Task5_4App extends App {
 
   // d) x / (y * z)
 
-  val optR4 : Option[Int] = ???
+  val optR4 : Option[Int] =
+    bds.get("x").flatMap(x =>
+      bds.get("y").flatMap(y =>
+        bds.get("z").flatMap(z =>
+          option {
+            x / (y * z)
+          }
+        )
+      )
+    )
 
   optR4 match {
     case Some(r) => println(s"x / (y * z) = $r")

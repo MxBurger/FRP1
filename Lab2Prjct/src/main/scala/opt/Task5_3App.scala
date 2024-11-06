@@ -11,7 +11,7 @@ object Task5_3App extends App {
   val optXY : Option[Int] =
     option {
       val x = bds.get("x").get
-      val y = bds.get("u").get
+      val y = bds.get("y").get
       x / y
     }
 
@@ -22,7 +22,12 @@ object Task5_3App extends App {
 
   // b)	x / z
 
-  val optXZ : Option[Int] = ???
+  val optXZ : Option[Int] =
+    option {
+      val x = bds.get("x").get
+      val z = bds.get("z").get
+      x / z
+    }
 
   optXZ match {
     case Some(xz) => println(s"x / z = $xz")
@@ -31,7 +36,12 @@ object Task5_3App extends App {
 
   // c)	x / u
 
-  val optXU : Option[Int] = ???
+  val optXU : Option[Int] =
+    option {
+      val x = bds.get("x").get
+      val u = bds.get("u").get
+      x / u
+    }
 
   optXU match {
     case Some(xu) => println(s"x / u = $xu")

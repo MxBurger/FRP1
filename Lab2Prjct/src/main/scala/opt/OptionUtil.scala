@@ -1,6 +1,6 @@
 package opt
 
-def option[X](code: => X): Option[X] = {
+def option[A](code: => A): Option[A] = {
   try {
     Some(code)
   } catch

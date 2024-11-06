@@ -85,9 +85,6 @@ object ResultsAnalysis {
         (i, sum.toDouble / valids.size)
       }).toMap
     println(avrgPointsPerAssnmt)
-
-
-
   }
 
   private def computeGrade(points: IndexedSeq[Int]): Grade = {
