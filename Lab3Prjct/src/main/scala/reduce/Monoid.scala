@@ -14,13 +14,13 @@ object Monoid {
     }
 
   // TODO: Task 6.1 Monoid instances
-  given intPlusMonoid: Monoid[Int] = ???
-  val intTimesMonoid: Monoid[Int] = ???
-  given doublePlusMonoid: Monoid[Double] = ???
-  val doubleTimesMonoid: Monoid[Double] = ???
-  given stringMonoid: Monoid[String] = ???
-  def listMonoid[A]: Monoid[List[A]] = ???
-  def setMonoid[A]: Monoid[Set[A]] = ???
+  given intPlusMonoid: Monoid[Int] = Monoid(0, (x,y) => x + y)
+  val intTimesMonoid: Monoid[Int] = Monoid(1, (x,y) => x * y)
+  given doublePlusMonoid: Monoid[Double] = Monoid(0.0, (x,y) => x + y)
+  val doubleTimesMonoid: Monoid[Double] = Monoid(1.0, (x,y) => x * y)
+  given stringMonoid: Monoid[String] = Monoid("", (x,y) => x + y)
+  given listMonoid[A]: Monoid[List[A]] = Monoid(List(), (l1, l2) => l1.appendedAll(l2))
+  given setMonoid[A]: Monoid[Set[A]] = Monoid(Set(), (s1, s2) => s1 ++ s2) // union
 
   def optionMonoid[A](using elemMonoid: Monoid[A]) : Monoid[Option[A]] =
     Monoid(None, (optA, optB) => {

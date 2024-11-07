@@ -27,6 +27,9 @@ object Task6_2_TreeReducible {
 
     val namesReducible = Reducible(nameTree)
 
+    val list = namesReducible.reduceMap(name => List(name)) // (using listMonoid[String])
+    println(s"List of elements = $list")
+
     //a) count the elements
     val n = ???
     println(s"Number elements = $n")
