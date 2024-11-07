@@ -1,6 +1,7 @@
 package rand
 
-import stream._
+import rand.Gen.intsFromTo
+import stream.*
 
 trait Gen[A] extends (Long => (A, Long)) {
 
@@ -14,10 +15,16 @@ trait Gen[A] extends (Long => (A, Long)) {
     this.flatMap(a => Gen.unit(f.apply(a)))
 
   // TODO: Task 8.3.a)
-  def lists(len: Int): Gen[List[A]] = ???
+  def list(len: Int): Gen[List[A]] =
+    if len == 0 then Gen.unit(List())
+    else for {
+      r <- this
+      l <- list(len - 1)
+    } yield r :: l
 
   // TODO: Task 8.3.b)
-  def listsOfLengths(minLen: Int, maxLen: Int): Gen[List[A]] = ???
+  def listsOfLengths(minLen: Int, maxLen: Int): Gen[List[A]] =
+    intsFromTo(minLen, maxLen).flatMap(len => list(len))
 
   // TODO: Tast 9.5
   def stream(seed: Long) : Stream[A] = ???
@@ -36,24 +43,32 @@ object Gen {
   }
 
   // TODO: Task 8.1: Random number generators
-  val posInts: Gen[Int] = ???
-  def intsFromTo(from: Int, to: Int) : Gen[Int] = ???
-  def intsTo(to: Int) : Gen[Int] = ???
+  val posInts: Gen[Int] = ints.map(i => i.abs)
+  def intsFromTo(from: Int, to: Int) : Gen[Int] =
+    { doubles.map(d => (d * (to - from)).toInt + from) }
+  def intsTo(to: Int) : Gen[Int] =
+      intsFromTo(0, to)
 
-  val doubles: Gen[Double] = ???
-  def doublesFromTo(from: Double, to: Double) : Gen[Double] = ???
-  def doublesTo(to: Double) : Gen[Double] = ???
+  val doubles: Gen[Double] = posInts.map {i => i.toDouble / Integer.MAX_VALUE.toDouble } // range: [0, 1]
+  def doublesFromTo(from: Double, to: Double) : Gen[Double] =
+    { doubles.map(d => d * (to - from) + from) }
+  def doublesTo(to: Double) : Gen[Double] =
+    doublesFromTo(0.0, to)
 
   // TODO: Task 8.2: Discrete random values
 
-  def booleans(prob: Double) = ???
+  def booleans(prob: Double) :Gen[Boolean] =
+    doubles.map(d => d <= prob)
 
-  def valuesOf[A](values: A*) : Gen[A] = ???
+  def valuesOf[A](values: A*) : Gen[A] =
+    intsTo(values.size).map(i => values(i))
 
-  val letters : Gen[Char] = ???
-  //'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
+  val letters : Gen[Char] =
+    valuesOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
+      'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
 
   // TODO: Task 8.3c: words
-  def words(len: Int) : Gen[String] = ???
+  def words(maxLen: Int) : Gen[String] =
+    letters.listsOfLengths(2, maxLen).map(cs => String.valueOf(cs.toArray))
 
 }
