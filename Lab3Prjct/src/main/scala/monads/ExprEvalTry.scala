@@ -9,7 +9,36 @@ import scala.util.{Failure, Success, Try}
 object ExprEvalTry {
 
   def eval(expr: Expr, bds: Map[String, Double]): Try[Double] =
-    ???
+    // HOMEWORK
+    expr match {
+      //case Lit(v) => Some(v)
+      case Var(n) => Try {
+        bds(n)
+      }
+
+      case Add(l, r) =>
+        for {
+          lv <- eval(l, bds)
+          rv <- eval(r, bds)
+        } yield lv + rv
+
+      case Mult(l, r) =>
+        for {
+          lv <- eval(l, bds)
+          rv <- eval(r, bds)
+        } yield lv * rv
+
+      case Min(s) =>
+        for {
+          sr <- eval(s, bds)
+        } yield -sr
+
+      case Rec(s) =>
+        for {
+          sr <- eval(s, bds)
+          r <- if (sr == 0.0) then Failure(new Exception("Division by zero")) else Success(1.0 / sr)
+        } yield r
+    }
 
   def main(args: Array[String]) : Unit = {
 

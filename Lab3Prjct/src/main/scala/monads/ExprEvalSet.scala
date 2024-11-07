@@ -8,7 +8,30 @@ import scala.util.{Failure, Success, Try}
 object ExprEvalSet {
 
   def eval(expr: Expr, bds: Map[String, Set[Double]]): Set[Double] =
-    ???
+    expr match {
+      case Lit(v) => Set(v)
+      case Var(n) => if (bds.contains(n)) bds(n) else Set()
+      case Add(l, r) =>
+        eval(l, bds).flatMap { lv =>
+          eval(r, bds).map { rv =>
+            lv + rv
+          }
+        }
+      case Mult(l, r) =>
+        eval(l, bds).flatMap { lv =>
+          eval(r, bds).map { rv =>
+            lv * rv
+          }
+        }
+      case Min(s) =>
+        eval(s, bds).map { sr =>
+          -sr
+        }
+      case Rec(s) =>
+        eval(s, bds).flatMap { sr =>
+          if (sr == 0.0) then Set() else Set(1.0 / sr)
+        }
+    }
 
   def main(args: Array[String]): Unit = {
 
