@@ -45,5 +45,27 @@ object GenTests {
     val (r4, _) = nElemsLists(87236481)
     for (l <- r4) println(l)
 
+    // further tests
+
+    // Generator for list of 5 pairs of random integers
+    val intIntPairs: Gen[List[(Int, Int)]] = ints.flatMap(i1 => ints.map(i2 => (i1, i2))).list(5)
+    val (r5, _) = intIntPairs(12345)
+    for (pair <- r5) println(pair)
+    println
+
+    // Generator for nested lists of random strings
+    val nestedStringLists: Gen[List[List[String]]] = words(15).listsOfLengths(3, 3).list(5)
+    val (r6, _) = nestedStringLists(67890)
+    for (list <- r6) println(list)
+    println
+
+    // Generator for lists of floating - point numbers in the range [ 0.0, 1.0 ]
+    val floatList: Gen[List[Double]] = doublesTo(1.0).list(10)
+    val (r7, _) = floatList(54321)
+    for (d <- r7) println(d)
+    println
+
+
+
   }
 }

@@ -14,7 +14,7 @@ trait Gen[A] extends (Long => (A, Long)) {
   def map[B](f: A => B) : Gen[B] =
     this.flatMap(a => Gen.unit(f.apply(a)))
 
-  // TODO: Task 8.3.a)
+  //  Task 8.3.a)
   def list(len: Int): Gen[List[A]] =
     if len == 0 then Gen.unit(List())
     else for {
@@ -22,16 +22,17 @@ trait Gen[A] extends (Long => (A, Long)) {
       l <- list(len - 1)
     } yield r :: l
 
-  // TODO: Task 8.3.b)
+  // : Task 8.3.b)
   def listsOfLengths(minLen: Int, maxLen: Int): Gen[List[A]] =
     intsFromTo(minLen, maxLen).flatMap(len => list(len))
 
-  // TODO: Task 9.5
+  //  Task 9.5
   def stream(seed: Long) : Stream[A] =
     val (a, next) = this(seed)
     Cons(() => a, () => stream(next))
 
   def stream : Stream[A] = stream(System.currentTimeMillis())
+
 }
 
 object Gen {
@@ -44,7 +45,7 @@ object Gen {
     (randInt, newSeed)
   }
 
-  // TODO: Task 8.1: Random number generators
+  // Task 8.1: Random number generators
   val posInts: Gen[Int] = ints.map(i => i.abs)
   def intsFromTo(from: Int, to: Int) : Gen[Int] =
     { doubles.map(d => (d * (to - from)).toInt + from) }
@@ -57,7 +58,7 @@ object Gen {
   def doublesTo(to: Double) : Gen[Double] =
     doublesFromTo(0.0, to)
 
-  // TODO: Task 8.2: Discrete random values
+  // Task 8.2: Discrete random values
 
   def booleans(prob: Double) :Gen[Boolean] =
     doubles.map(d => d <= prob)
@@ -69,8 +70,10 @@ object Gen {
     valuesOf('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
       'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
 
-  // TODO: Task 8.3c: words
+  // Task 8.3c: words
   def words(maxLen: Int) : Gen[String] =
     letters.listsOfLengths(2, maxLen).map(cs => String.valueOf(cs.toArray))
+
+
 
 }

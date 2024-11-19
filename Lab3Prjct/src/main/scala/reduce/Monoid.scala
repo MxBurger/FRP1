@@ -13,7 +13,7 @@ object Monoid {
       override val zero: M = z
     }
 
-  // TODO: Task 6.1 Monoid instances
+  //  Task 6.1 Monoid instances
   given intPlusMonoid: Monoid[Int] = Monoid(0, (x,y) => x + y)
   val intTimesMonoid: Monoid[Int] = Monoid(1, (x,y) => x * y)
   given doublePlusMonoid: Monoid[Double] = Monoid(0.0, (x,y) => x + y)
