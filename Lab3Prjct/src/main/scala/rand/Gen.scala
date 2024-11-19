@@ -26,7 +26,7 @@ trait Gen[A] extends (Long => (A, Long)) {
   def listsOfLengths(minLen: Int, maxLen: Int): Gen[List[A]] =
     intsFromTo(minLen, maxLen).flatMap(len => list(len))
 
-  // TODO: Tast 9.5
+  // TODO: Task 9.5
   def stream(seed: Long) : Stream[A] =
     val (a, next) = this(seed)
     Cons(() => a, () => stream(next))

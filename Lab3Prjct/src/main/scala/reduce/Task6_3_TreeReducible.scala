@@ -1,5 +1,6 @@
 package reduce
 
+import reduce.Monoid.setMonoid
 import tree.*
 
 object Task6_3_TreeReducible {
@@ -28,19 +29,19 @@ object Task6_3_TreeReducible {
     val namesReducible = Reducible(nameTree)
 
     //a) count the elements
-    val n = ???
+    val n = namesReducible.reduceMap(name => 1)
     println(s"Number elements = $n")
 
     //b) concatenate the elements to a single string
-    val one = ???
+    val one = namesReducible.reduceMap(name => name)
     println(s"Concatenated = $one")
 
     //c) compute length of all strings
-    val length = ???
+    val length = namesReducible.reduceMap(name => name.length)
     println(s"Length of elements = $length")
 
     //d) create a set of the elements
-    val setOfNames = ???
+    val setOfNames = namesReducible.reduceMap(name => Set(name)) (using setMonoid[String])
     println(s"Set of elements = $setOfNames")
   }
 

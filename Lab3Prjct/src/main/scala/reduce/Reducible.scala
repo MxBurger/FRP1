@@ -7,10 +7,10 @@ trait Reducible[A] {
   def reduceMap[B](mapper: A => B)(using monoid: Monoid[B]): B // "using" uses the default monoid defined with "given" in Monoid.scala
   def reduce(using monoid: Monoid[A]): A = reduceMap(a => a)
 
-  def asList: List[A] = ???
-  def asSet: Set[A] = ???
-  def count: Int = ???
-  def sum(fn: A => Int): Int = ???
+  def asList: List[A] = reduceMap(a => List(a)) // (using listMonoid[A])
+  def asSet: Set[A] = reduceMap(a => Set(a)) // (using setMonoid[A])
+  def count: Int = reduceMap(a => 1) // (using intPlusMonoid)
+  def sum(fn: A => Int): Int = reduceMap(fn)
 }
 
 object Reducible {
