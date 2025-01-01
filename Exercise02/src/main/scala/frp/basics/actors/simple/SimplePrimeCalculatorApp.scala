@@ -9,4 +9,10 @@ def simplePrimeCalculatorMain(): Unit =
 
   println("==================== SimplePrimeCalculatorApp ==========================")
 
+  ActorSystem(SimpleMainActor(), "simple-prime-calculator-system")
+
+  Thread.sleep(3000)
+  system.terminate()
+  Await.result(system.whenTerminated, Duration.Inf)
+
 end simplePrimeCalculatorMain

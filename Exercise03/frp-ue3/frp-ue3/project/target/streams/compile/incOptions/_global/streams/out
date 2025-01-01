@@ -1,0 +1,5 @@
+[debug] Created transactional ClassFileManager with tempDir = /home/max/Schreibtisch/FRP1/Exercise/FRP1/Exercise03/frp-ue3/frp-ue3/project/target/scala-2.12/sbt-1.0/classes.bak
+[debug] About to delete class files:
+[debug] We backup class files:
+[debug] Created transactional ClassFileManager with tempDir = /home/max/Schreibtisch/FRP1/Exercise/FRP1/Exercise03/frp-ue3/frp-ue3/project/target/scala-2.12/sbt-1.0/classes.bak
+[debug] Removing the temporary directory used for backing up class files: /home/max/Schreibtisch/FRP1/Exercise/FRP1/Exercise03/frp-ue3/frp-ue3/project/target/scala-2.12/sbt-1.0/classes.bak
