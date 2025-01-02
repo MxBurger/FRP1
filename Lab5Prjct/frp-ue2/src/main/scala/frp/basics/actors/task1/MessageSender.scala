@@ -15,31 +15,29 @@ object MessageSender {
   final case class RetryMessage(msgId: Int) extends Command
   case object Shutdown extends Command
 
-  def apply(): Behavior[Command] =
-    Behaviors.setup(ctx => new MessageSender(ctx))
+  def apply(maxRetries: Int = 3): Behavior[Command] =
+    Behaviors.setup(ctx => new MessageSender(ctx, maxRetries))
 }
 
-class MessageSender(context: ActorContext[MessageSender.Command]) extends AbstractBehavior[MessageSender.Command](context):
+class MessageSender(
+                     context: ActorContext[MessageSender.Command],
+                     maxRetries: Int
+                   ) extends AbstractBehavior[MessageSender.Command](context):
   import MessageSender._
   import context.executionContext
 
   private val timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
-  private val pendingMessages = mutable.Map[Int, (Message, ActorRef[MessageReceiver.Command], Int)]() // messageId -> (message, receiver, retryCount)
-  private val maxRetries = 3
-  private val retryDelay = 1.seconds
+  private val pendingMessages = mutable.Map[Int, (Message, ActorRef[MessageReceiver.Command], Int)]()
+  private val retryDelay = 1.second
 
   override def onMessage(msg: MessageSender.Command): Behavior[MessageSender.Command] =
     msg match {
       case SendMessage(message, receiver) =>
         val timestamp = LocalDateTime.now().format(timestampFormat)
-        println(s"[$timestamp] Sending message - ID: ${message.id}, Text: ${message.text}")
+        println(s"[$timestamp] Sending message - ID: ${message.id}, Text: ${message.text} (max retries: $maxRetries)")
 
-        // Store message for potential retry
         pendingMessages(message.id) = (message, receiver, 0)
-
-        // Schedule retry if no confirmation received
         context.scheduleOnce(retryDelay, context.self, RetryMessage(message.id))
-
         receiver ! MessageReceiver.ReceiveMessage(message, context.self)
         Behaviors.same
 
@@ -53,20 +51,16 @@ class MessageSender(context: ActorContext[MessageSender.Command]) extends Abstra
         pendingMessages.get(msgId) match {
           case Some((message, receiver, retryCount)) if retryCount < maxRetries =>
             val timestamp = LocalDateTime.now().format(timestampFormat)
-            println(s"[$timestamp] Retrying message - ID: ${message.id}, Attempt: ${retryCount + 1}")
+            val nextRetry = retryCount + 1
+            println(s"[$timestamp] Retrying message - ID: ${message.id}, Attempt: $nextRetry/$maxRetries")
 
-            // Update retry count
-            pendingMessages(msgId) = (message, receiver, retryCount + 1)
-
-            // Schedule next retry
+            pendingMessages(msgId) = (message, receiver, nextRetry)
             context.scheduleOnce(retryDelay, context.self, RetryMessage(msgId))
-
-            // Resend message
             receiver ! MessageReceiver.ReceiveMessage(message, context.self)
 
           case Some((message, _, retryCount)) =>
             val timestamp = LocalDateTime.now().format(timestampFormat)
-            println(s"[$timestamp] Max retries reached for message ID: ${message.id}")
+            println(s"[$timestamp] Max retries ($maxRetries) reached for message ID: ${message.id}")
             pendingMessages.remove(msgId)
 
           case None => // Message was confirmed, nothing to do

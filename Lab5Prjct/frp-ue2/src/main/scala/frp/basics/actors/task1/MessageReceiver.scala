@@ -20,7 +20,7 @@ class MessageReceiver(context: ActorContext[MessageReceiver.Command])
 
   private val timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
   private val random = new Random()
-  private var processedMessages = Set[Int]()  // Track processed message IDs
+  private var processedMessages = Set[Int]()
 
   override def onMessage(msg: MessageReceiver.Command): Behavior[MessageReceiver.Command] =
     msg match {
@@ -45,7 +45,6 @@ class MessageReceiver(context: ActorContext[MessageReceiver.Command])
             }
           } else {
             println(s"[$timestamp] Duplicate message received - ID: ${msg.id}")
-            // Still send confirmation for duplicates
             replyTo ! MessageSender.MessageConfirmed(Confirmation(msg.id))
           }
           Behaviors.same
