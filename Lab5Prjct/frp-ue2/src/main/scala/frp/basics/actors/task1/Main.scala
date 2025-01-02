@@ -19,11 +19,13 @@ def task1Main(): Unit =
 
   // Send some messages to the receiver
   messageSender ! MessageSender.SendMessage(Message(1, "Hello"), messageReceiver)
+  Thread.sleep(500)
   messageSender ! MessageSender.SendMessage(Message(2, "How are you?"), messageReceiver)
+  Thread.sleep(500)
   messageSender ! MessageSender.SendMessage(Message(3, "Goodbye"), messageReceiver)
 
-  // Wait a bit to allow message processing
-  Thread.sleep(1000)
+  // Wait longer to allow for retries
+  Thread.sleep(5000)
 
   // Shutdown the actors
   messageSender ! MessageSender.Shutdown
