@@ -23,8 +23,8 @@ class MessageSender(
                      context: ActorContext[MessageSender.Command],
                      maxRetries: Int
                    ) extends AbstractBehavior[MessageSender.Command](context):
+  
   import MessageSender._
-  import context.executionContext
 
   private val timestampFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
   private val pendingMessages = mutable.Map[Int, (Message, ActorRef[MessageReceiver.Command], Int)]()
