@@ -59,7 +59,7 @@ object DataStorage {
       message match {
         case StoreMeasurement(measurement) =>
           val newBuffer = buffer :+ measurement
-          println("Added measurement to buffer. Current size: ${newBuffer.size}/${config.bufferSize}")
+          println(s"Added measurement to buffer. Current size: ${newBuffer.size}/${config.bufferSize}")
 
           if (newBuffer.size >= config.bufferSize) {
             println(s"Buffer size threshold reached (${config.bufferSize}). Triggering persistence.")
