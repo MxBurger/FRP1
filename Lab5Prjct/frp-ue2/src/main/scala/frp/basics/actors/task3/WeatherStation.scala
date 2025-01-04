@@ -1,12 +1,11 @@
 package frp.basics.actors.task3
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, SupervisorStrategy}
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors, Routers}
-import akka.util.Timeout
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
+
 import java.time.Instant
-import java.nio.file.{Files, Paths, StandardOpenOption}
-import scala.concurrent.duration._
-import scala.util.{Random, Success, Failure}
+import scala.concurrent.duration.FiniteDuration
+import scala.util.Random
 
 object WeatherStation {
   sealed trait Command
@@ -26,24 +25,30 @@ object WeatherStation {
                               )
 
   def apply(config: WeatherStationConfig): Behavior[Command] = {
-    Behaviors.withTimers { timers =>
-      timers.startTimerWithFixedDelay(
-        "measurement",
-        Measure,
-        config.measurementInterval
-      )
+    Behaviors.setup { context =>
+      println(s"Starting WeatherStation with config: interval=${config.measurementInterval}, tempRange=[${config.minTemp}, ${config.maxTemp}]")
 
-      Behaviors.receiveMessage {
-        case Measure =>
-          val measurement = Measurement(
-            id = java.util.UUID.randomUUID().toString,
-            timestamp = Instant.now(),
-            temperature = config.minTemp + Random.nextDouble() * (config.maxTemp - config.minTemp)
-          )
+      Behaviors.withTimers { timers =>
+        timers.startTimerWithFixedDelay(
+          "measurement",
+          Measure,
+          config.measurementInterval
+        )
+        println(s"Measurement timer started with interval ${config.measurementInterval}")
 
-          config.storageActor ! DataStorage.StoreMeasurement(measurement)
+        Behaviors.receiveMessage {
+          case Measure =>
+            val measurement = Measurement(
+              id = java.util.UUID.randomUUID().toString,
+              timestamp = Instant.now(),
+              temperature = config.minTemp + Random.nextDouble() * (config.maxTemp - config.minTemp)
+            )
 
-          Behaviors.same
+            println(s"Generated measurement: id=${measurement.id}, temp=${measurement.temperature}")
+            config.storageActor ! DataStorage.StoreMeasurement(measurement)
+
+            Behaviors.same
+        }
       }
     }
   }

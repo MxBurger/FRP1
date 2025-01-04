@@ -5,6 +5,7 @@ import akka.actor.typed.scaladsl.{Behaviors, Routers}
 
 import java.util.concurrent.atomic.AtomicInteger
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration.DurationInt
 
 object DataStorage {
   sealed trait Command
@@ -14,21 +15,26 @@ object DataStorage {
 
   final case class StorageConfig(
                                   bufferSize: Int = 100,
-                                  bufferTimeout: FiniteDuration = FiniteDuration(5, "seconds"),
+                                  bufferTimeout: FiniteDuration = 5.seconds,
                                   filePath: String = "measurements.csv",
                                   numberOfWorkers: Int = 4
                                 )
 
   def apply(config: StorageConfig): Behavior[Command] = {
     Behaviors.setup { context =>
+      println(s"Starting DataStorage with config: bufferSize=${config.bufferSize}, timeout=${config.bufferTimeout}, workers=${config.numberOfWorkers}")
+
+      val workerIdCounter = new AtomicInteger(0)
+
       // Create worker pool
       val workerPool = Routers.pool(config.numberOfWorkers) {
-        val workerIdCounter = new AtomicInteger(0)
-        Behaviors.supervise(
-          StorageWorker(workerIdCounter.getAndIncrement(), config.filePath)
-        ).onFailure[Exception](SupervisorStrategy.restart)
+        Behaviors.setup[StorageWorker.Command] { context =>
+          val workerId = workerIdCounter.getAndIncrement()
+          StorageWorker(workerId, config.filePath)
+        }
       }
       val router = context.spawn(workerPool, "storage-worker-pool")
+      println(s"Created worker pool with ${config.numberOfWorkers} workers")
 
       // Start periodic buffer flush
       Behaviors.withTimers { timers =>
@@ -37,6 +43,7 @@ object DataStorage {
           BufferTimeout,
           config.bufferTimeout
         )
+        println(s"Buffer timeout timer started with interval ${config.bufferTimeout}")
 
         active(Vector.empty, router, config)
       }
@@ -52,9 +59,10 @@ object DataStorage {
       message match {
         case StoreMeasurement(measurement) =>
           val newBuffer = buffer :+ measurement
-          context.log.debug(s"Buffer size: ${newBuffer.size}")
+          println("Added measurement to buffer. Current size: ${newBuffer.size}/${config.bufferSize}")
 
           if (newBuffer.size >= config.bufferSize) {
+            println(s"Buffer size threshold reached (${config.bufferSize}). Triggering persistence.")
             router ! StorageWorker.StoreMeasurements(newBuffer)
             active(Vector.empty, router, config)
           } else {
@@ -63,15 +71,19 @@ object DataStorage {
 
         case BufferTimeout =>
           if (buffer.nonEmpty) {
+            println(s"Buffer timeout triggered. Persisting ${buffer.size} measurements")
             router ! StorageWorker.StoreMeasurements(buffer)
             active(Vector.empty, router, config)
           } else {
+            println("Buffer timeout triggered but buffer is empty")
             Behaviors.same
           }
 
         case WorkerCompleted(success) =>
           if (!success) {
-            context.log.error("Worker failed to persist measurements")
+            println("Worker reported failed persistence")
+          } else {
+            println("Worker reported successful persistence")
           }
           Behaviors.same
       }
