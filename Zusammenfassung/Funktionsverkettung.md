@@ -135,3 +135,141 @@ val divisors = for {
 // )
 ```
 Der "Kontext" hier ist die Verarbeitung mehrerer Werte. Die Monade kümmert sich darum, alle möglichen Kombinationen zu erzeugen.
+
+## Funktions-Komposition
+Function Composition ist ein zentrales Konzept der funktionalen Programmierung in Scala, bei dem Funktionen als Bausteine verwendet werden, um komplexere Funktionen zu erstellen. **Function Composition Operatoren** sind selbst Funktionen, die andere Funktionen als Parameter akzeptieren. Sie geben wiederum Funktionen als Ergebnis zurück. Das ermöglicht das Erstellen komplexerer Funktionen aus einfacheren Funktionen.
+
+```scala
+trait Function1[-T1, +R] extends AnyRef { self =>
+  def apply(v1: T1): R
+
+  //Wendet erst die übergebene Funktion g an und dann die aktuelle Funktion
+  def compose[A](g: A => T1): A => R = { x => this.apply(g(x)) }
+
+  // Wendet erst die aktuelle Funktion an und dann die übergebene Funktion g
+  def andThen[A](g: R => A): T1 => A = { x => g(this.apply(x)) }
+}
+```
+
+Beispiel aus den Folien:
+```scala
+val wordsFn: String => List[String] = 
+  line => line.split(" ").toList
+val sortFn: List[String] => List[String] = 
+  words => words.sorted
+val wordsSortFn: String => List[String] = 
+  wordsFn.andThen(sortFn)
+
+println(wordsSortFn("functional programming is great"))
+// Ausgabe: List(functional, great, is, programming)
+```
+
+\
+**Exkurs: Erweiterungs-Methoden (Extension-Methods)**
+```scala
+extension (s: String)
+  def toInt: Int = Integer.parseInt(s)
+  def toLong: Long = java.lang.Long.parseLong(s)
+  def toDouble: Double = java.lang.Double.parseDouble(s)
+
+// Verwendung
+"123".toInt
+"0.5".toDouble
+```
+```scala
+object ListOps :
+  extension[T](l : List[T])
+    def isLong : Boolean = l.size > 10
+    def isShort : Boolean = l.size <= 10
+
+// Verwendung
+import ListOps.*
+val lst = List(1, 2, 3, 4)
+if (lst.isLong) then ... 
+```
+
+Für die Kombination von Prädikaten können eigene Kompositions-Operatoren erstellt werden.
+
+Sie werden folgendermaßen definiert.
+```scala
+type Predicate[-T] = T => Boolean
+
+extension[A] (p: Predicate[A])
+  def &&(p2: Predicate[A]): Predicate[A] = a => p(a) && p2(a)  
+  def ||(p2: Predicate[A]): Predicate[A] = a => p(a) || p2(a)
+  def not: Predicate[A] = a => !p(a)
+```
+
+Und kommen hier zur Anwendung.
+
+*Einfaches Beispiel:*
+```scala
+// Einzelne Prädikate
+val isPositive: Predicate[Int] = x => x > 0
+val isEven: Predicate[Int] = x => x % 2 == 0
+
+// Kombinierte Prädikate
+val isPositiveAndEven = isPositive && isEven
+val isPositiveOrEven = isPositive || isEven
+val isNotPositive = isPositive.not
+
+// Anwendung
+val numbers = List(1, 2, -3, 4, -5, 6)
+numbers.filter(isPositiveAndEven) // Ergibt: List(2, 4, 6)
+```
+
+*Komplexeres Beispiel:*
+```scala
+def containsFn[A](a: A) : Predicate[List[A]] =
+lst => lst.contains(a)
+
+def isEmptyFn[A] : Predicate[List[A]] =
+lst => lst.isEmpty
+
+def notEmptyAndContainsFn[A](a: A) : Predicate[List[A]] =
+isEmptyFn.not && containsFn(a).not
+
+println(notEmptyAndContainsFn(7)(List(1, 2, 3, 4, 5, 6, 8))) // true
+```
+Die zweite Parameterliste entsteht durch Currying. Eine Funktion nicht alle Parameter auf einmal, sondern sie werden schrittweise angewendet. Die ausgeschriebene Typ-Inferenz würde so aussehen:
+```scala
+// Typ: Int => (List[Int] => Boolean)
+val checkFor7 = notEmptyAndContainsFn(7) 
+
+// Typ: Boolean
+val result = checkFor7(List(1, 2, 3, 4, 5, 6, 8))
+```
+
+### Currying :curry:
+
+Currying (kA was das auf deutsch ist :smile:) ist ein fundamentales Konzept in der funktionalen Programmierung.
+
+**Funktion ohne Currying:**
+```scala
+def add(x: Int, y: Int): Int = x + y
+// Aufruf:
+add(2, 3) // Ergebnis: 5
+```
+**Selbe Funktion "gecurried":**
+```scala
+def addCurried(x: Int)(y: Int): Int = x + y
+// Aufruf:
+addCurried(2)(3) // Ergebnis: 5
+```
+Das bietet die Möglichkeit, die Funktion teilweise anzuwenden.
+```scala
+// Erstellt eine neue Funktion, die 2 zu einer Zahl addiert
+val add2 = addCurried(2)
+// add2 ist jetzt vom Typ: Int => Int
+
+// Kann mehrfach verwendet werden:
+add2(3) // Ergebnis: 5
+add2(4) // Ergebnis: 6
+add2(5) // Ergebnis: 7
+```
+Currying ist besonders nützlich, wenn wir:
+- Funktionen teilweise mit Parametern "vorkonfigurieren" möchten
+- eine Funktion als Parameter an andere Funktionen übergeben möchten
+- Funktionen komponieren möchten
+
+### Type aliases
