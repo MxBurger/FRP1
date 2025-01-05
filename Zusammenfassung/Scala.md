@@ -100,3 +100,56 @@ List(1, 2, 3).flatMap(x => List(x, x * 2))
 ```
 
 ---
+
+### `reduce`
+`reduce` ist eine Operation zum "Zusammenfalten" einer Collection in einen einzelnen Wert. Dabei wird eine binäre Operation (eine Funktion, die zwei Werte kombiniert) auf alle Elemente nacheinander angewendet. `a` immer das "akkumulierte" Ergebnis der vorherigen Operationen, und `b` ist das nächste Element aus der Liste.
+- Die Collection darf nicht leer sein, sonst gibt es eine Exception
+- Der Rückgabetyp muss der gleiche sein wie der Typ der Elemente
+- Die Operation sollte assoziativ sein für vorhersagbare Ergebnisse
+  
+```scala
+// Summe aller Zahlen
+List(1, 2, 3, 4).reduce((a, b) => a + b)  // Ergebnis: 10
+
+// Das Gleiche kürzer geschrieben
+List(1, 2, 3, 4).reduce(_ + _)  // Ergebnis: 10
+
+// Multiplikation aller Zahlen
+List(1, 2, 3, 4).reduce(_ * _)  // Ergebnis: 24
+
+// Größte Zahl finden
+List(4, 2, 7, 1).reduce((a, b) => if (a > b) a else b)  // Ergebnis: 7
+```
+`reduce` wird von links nach rechts auf die Elemente angewendet.
+```scala
+List(1, 2, 3, 4).reduce(_ + _)
+
+// Wird ausgeführt als:
+((1 + 2) + 3) + 4
+
+// Schrittweise:
+//1. 1 + 2 = 3
+//2. 3 + 3 = 6
+//3. 6 + 4 = 10
+```
+
+Will man explizit die Richtung festlegen, gibt es auch:
+
+- `reduceLeft`: garantiert von links nach rechts (wie reduce)
+- `reduceRight`: von rechts nach links
+
+```scala
+// reduceRight
+List(1, 2, 3, 4).reduceRight(_ + _)
+// Wird ausgeführt als:
+1 + (2 + (3 + 4))
+```
+
+Bei manchen Operationen wie `+` oder `*` macht die Reihenfolge keinen Unterschied, weil sie assoziativ sind. Bei nicht-assoziativen Operationen wie `-` oder `/` kann die Reihenfolge aber zu unterschiedlichen Ergebnissen führen:
+```scala
+List(1, 2, 3).reduce(_ - _)     // ((1 - 2) - 3) = -4
+List(1, 2, 3).reduceRight(_ - _) // (1 - (2 - 3)) = 2
+```
+
+--- 
+### `fold`
