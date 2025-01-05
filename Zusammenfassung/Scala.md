@@ -152,4 +152,57 @@ List(1, 2, 3).reduceRight(_ - _) // (1 - (2 - 3)) = 2
 ```
 
 --- 
+
 ### `fold`
+`fold` ist ähnlich wie `reduce`, aber mit einem wichtigen Unterschied: Es nimmt einen Startwert ("neutral element").
+
+Syntax:
+```scala
+collection.fold(neutral)((accumulator, element) => /* Operation */)
+```
+Beispiele:
+```scala
+// Mit Zahlen
+List(1, 2, 3).fold(0)(_ + _)  // Startwert 0, Ergebnis: 6
+List(1, 2, 3).fold(10)(_ + _) // Startwert 10, Ergebnis: 16
+
+// Mit Strings
+List("a", "b", "c").fold("iAmACat ")(_ + _)  // Ergebnis: "iAmACat abc"
+
+// Funktioniert auch mit leeren Listen (anders als reduce!)
+List[Int]().fold(0)(_ + _)  // Ergebnis: 0
+```
+
+Es gibt auch `foldLeft` und `foldRight`, analog zu `reduce`:
+```scala
+// foldLeft geht von links nach rechts
+List(1, 2, 3).foldLeft(0)(_ - _)    // ((0 - 1) - 2) - 3 = -6
+
+// foldRight geht von rechts nach links
+List(1, 2, 3).foldRight(0)(_ - _)   // 1 - (2 - (3 - 0)) = 2
+```
+
+Die Hauptvorteile von fold gegenüber reduce:
+- Funktioniert mit leeren Collections
+- Der Ergebnistyp kann sich vom Elementtyp unterscheiden
+- Man kann einen sinnvollen Startwert angeben
+
+Beispiele mit unterschiedlichen Rückgabetypen als Elementtypen:
+```scala
+// Liste von Zahlen zu String
+List(1, 2, 3).fold("")((acc, num) => acc + num.toString)
+// Ergebnis: "123"
+// Elementtyp: Int, Ergebnistyp: String
+
+// Liste von Strings zu Zahl (Anzahl der Zeichen)
+List("hello", "world").fold(0)((acc, str) => acc + str.length)
+// Ergebnis: 10
+// Elementtyp: String, Ergebnistyp: Int
+
+// Liste zu Map (z.B. Häufigkeitszählung)
+List("a", "b", "a", "c").fold(Map[String, Int]()) { (acc, str) =>
+  acc + (str -> (acc.getOrElse(str, 0) + 1))
+}
+// Ergebnis: Map("a" -> 2, "b" -> 1, "c" -> 1)
+// Elementtyp: String, Ergebnistyp: Map[String, Int]
+```
