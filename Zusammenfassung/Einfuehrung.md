@@ -244,7 +244,7 @@ def facRec(n: Int) : Int = {
 ```
 
 > Von außen betrachtet sind beide reine Funktionen, da die veränderbaren Variablen `f` und `i` lokal sind und keine nach außen sichtbaren Seiteneffekte haben
-:exclamation: lokale veränderbare Variablen werden in Scala häufig aus Performancegründen verwendet
+>[INFO] lokale veränderbare Variablen werden in Scala häufig aus Performancegründen verwendet
 
 ### Referenzielle Transparenz
 
