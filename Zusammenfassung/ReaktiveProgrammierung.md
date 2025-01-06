@@ -218,3 +218,170 @@ def transfer(amount: Double, a1: Account, a2: Account): Unit =
     }
 ```
 - In der Praxis ist es jedoch schwierig, eine konsistente Ordnung von Ressourcen sicherzustellen.
+
+## Guarded Blocks
+Busy Waiting kann man durch den *wait/notify*-Mechanismus von Java vermeiden.
+
+```scala
+class Consumer(val tasks: Queue[() => Unit]) extends Thread:
+
+  def addTask(task: => Unit) = tasks.synchronized {
+    tasks.enqueue(() => task)
+    tasks.notifyAll()
+  }
+
+  private def getTask(): () => Unit = tasks.synchronized {
+    while (tasks.isEmpty)
+      tasks.wait() // Guarded Block
+
+    tasks.dequeue()
+  }
+
+  override def run() =
+    while true do
+      val task = getTask()
+      task()
+```
+- `wait()` kann zu *spurious wakeups* führen: Die Bedingung, auf die der Thread wartet, ist möglicherweise nicht erfüllt
+- Die Bedingung muss wiederholt überprüft werden → daher der Guarded Block (while-Schleife vor dem `wait()`)
+
+Der Guarded Block stellt sicher, dass:
+- Der Thread nur dann weitermacht, wenn die Wartebedingung tatsächlich erfüllt ist
+- Der Thread effizient auf neue Aufgaben in der Warteschlange wartet, ohne CPU-Zeit zu verschwenden
+
+## Volatile Variablen
+
+- Lese- und Schreibvorgänge sind atomar
+- Komplexe Operationen (z.B. Inkrementierung) sind **nicht** atomar
+- Schreibvorgänge zu volatile Variablen sind sofort für alle Threads sichtbar
+- Variablen werden nicht gecached oder in Registern gehalten
+- Der Compiler wird Anweisungen nicht neu anordnen
+- Kommunikation zwischen Threads über volatile Variablen ist sehr schnell
+- Häufigste Anwendung: Status-Flags
+
+```scala
+class Worker extends Thread:
+    @volatile
+    private var stopped = false
+
+    override def run() =
+        while !stopped do { /* Anweisungen */ }
+
+    def shutdown() = stopped = true
+```
+Ohne `@volatile` könnte das Programm möglicherweise nicht terminieren.
+
+Der Schlüsselpunkt ist, dass volatile Variablen eine einfache, performante Möglichkeit bieten, den Zustand zwischen Threads konsistent zu halten, besonders für Flags und einfache Statusvariablen.
+
+## Thread Pools
+- Das Erstellen von Prozessen ist sehr teuer, das von Threads teuer :confused:
+- ThreadPools können die Erstellung und Freigabe von Threads übernehmen, um diese einfacher zu Verwaltung oder Ressourcen zu sparen.
+
+**`ThreadPoolExecutor`:**
+- eine globale Task-Queue
+- Threads holen sich Tasks aus der globalen Queue
+- Tasks werden in die Queue eingereiht
+
+![ThreadPoolExecutor.png](assets/ThreadPoolExecutor.png)
+
+**`ForkJoinPool`:**
+- eine globale Task-Queue
+- zusätzlich eine lokale Queue für jeden Thread
+- Threads können Tasks aus ihrer lokalen Queue abrufen
+- "Work Stealing" Mechanismus: Threads können Tasks von anderen Threads "stehlen"
+![ForkJoinPool.png](assets/ForkJoinPool.png)
+
+Der ForkJoinPool punktet bei:
+- Besonders effizient für rekursive Aufgaben
+- Weniger Konflikte in der lokalen Queue
+- Last-Verteilung durch Work Stealing
+
+Der traditionelle `ThreadPoolExecutor` bietet eine einfachere, generische Aufgabenverwaltung.
+
+## Executor und ExecutorService
+- Der Executor entscheidet, auf welchem Thread und wann ein Task ausgeführt wird
+- Er entkoppelt Geschäftslogik von der Thread-Infrastruktur
+- Tasks müssen `Runnable` oder `Callable<T>` implementieren
+- `Callable`-Objekte können Werte zurückgeben
+- Fortgeschrittenere Konzepte wie `CompletableFutures` nutzen Thread-Pools intern
+- Scala verwendet die ThreadPool-Infrastruktur von Java
+
+![Executor.png](assets/Executor.png)
+Das bietet Möglichkeiten zur flexiblen und effizienten Verwaltung von Threads und Tasks, ohne dass Entwickler die low-level Thread-Koordination selbst implementieren müssen.
+
+Der Java-Executor kann direkt in Scala verwendet werden:
+```scala
+val executor = new java.util.concurrent.ForkJoinPool
+executor.execute(
+  () => println("Diese Aufgabe wird asynchron ausgeführt.")
+)
+```
+Es gibt aber einen Scala-Way of Doing Things :smile: `ExecutionContext`
+
+- Intern verwendet ExecutionContext eine ForkJoinPool-Instanz
+- Oft wird ein ExecutionContext implizit an Methoden übergeben
+
+Verwendung des globalen ExecutionContext
+```scala
+val execCtx = scala.concurrent.ExecutionContext.global
+execCtx.execute(
+  () => println("Diese Aufgabe wird asynchron ausgeführt.")
+)
+```
+
+Erstellen eines benutzerdefinierten ExecutionContext mit einem ForkJoinPool
+```scala
+val execCtx = scala.concurrent.ExecutionContext.fromExecutorService(
+  new java.util.concurrent.ForkJoinPool(2)
+)
+```
+
+## Atomic Variablen
+Atomare Variablen unterstützen komplexe Operationen (mehr als ein Lese-/Schreibvorgang), die atomar ausgeführt werden:
+```scala
+// Einfaches Beispiel für eindeutige ID-Generierung
+private val uid = new AtomicLong(0L)
+def getUniqueId(): Long = uid.incrementAndGet()
+```
+- Operationen werden lock-frei implementiert
+- Operationen sind sehr schnell
+- Keine Gefahr von Deadlocks
+- Operationen basieren auf einer grundlegenden atomaren Operation:  `compareAndSet` (auch compare-and-swap genannt)
+  - Nimmt den erwarteten vorherigen Wert und den neuen Wert
+  - Schlägt fehl, wenn der vorherige Wert geändert wurde → Operation muss wiederholt werden
+  
+```scala
+// Fortgeschritteneres Beispiel mit compareAndSet
+private val currId = new AtomicLong(0L)
+@tailrec def generateUniqueId(): Long =
+  val oldId = currId.get
+  val newId = oldId + 1
+  if currId.compareAndSet(oldId, newId) then newId 
+  else generateUniqueId()
+```
+Benefits:
+- Sichere Nebenläufigkeit ohne explizite Locks
+- Sehr effiziente Aktualisierung von Werten in mehreren Threads
+- Garantiert konsistente Zustände bei konkurrierenden Zugriffen
+
+Der `@tailrec`-Decorator stellt sicher, dass die Rekursion vom Compiler optimiert wird, um Stack-Overflow zu vermeiden. Der compareAndSet-Mechanismusvergleicht den aktuellen Wert mit dem erwarteten Wert und aktualisiert ihn nur, wenn sie übereinstimmen, was RaceConditions verhindert.
+
+## Concurrent Collections
+- Producer-Consumer ist ein häufiges Pattern in der nebenläufigen Programmierung
+- Tasks müssen in einer nebenläufigen Queue gepuffert werden
+
+![WorkQueue.png](assets/WorkQueue.png)
+Java's nebenläufige Queues können auch in Scala verwendet werden.
+
+Operationstypen bei `BlockingQueue` (unterschiedliches Verhalten je nachdem ob die Queue leer oder voll ist):
+-  Operationen die eine Execption werfen:
+   -  `add`/`remove`/`element`
+- Operationen, die einen Sonderwert zurückgeben:
+  - `offer`/`poll`/`peek`
+  - z.Bsp `null`-Werte oder `true`/`false` bei `offer` (je nachdem ob das Element eingefügt werden konnte)
+- Blockiernde Operationen:
+  - `put`/`take`
+  - 
+Iteratoren sind schwach konsistent: Änderungen können möglicherweise nicht sofort im Iterator reflektiert werden.
+
+Der Anwendungsfall von Concurrent Collections ist die sichere und kontrollierte Kommunikation zwischen Produzenten und Konsumenten in einem nebenläufigen System. 
