@@ -95,3 +95,126 @@ Grundlegendes Wissen über Low-Level-Ansätze ist essentiell, um High-Level-Konz
   - Locks: Sperren für die gleiche Synchronisationsvariable dürfen sich nicht überlappen
   - Volatile fields: Ein Schreibzugriff auf ein volatiles Feld ist sofort für alle Threads sichtbar
   - Thread-Start: Alle Aktionen in einem Thread werden nach dem Aufruf von start() ausgeführt
+
+## Threads in Scala
+
+Ein Thread is leicht erstellt:
+```scala
+class MyThread extends Thread:
+  override def run(): Unit =
+    println("Executed in new thread.")
+
+val t = new MyThread
+t.start()
+```
+Hilfsmethode aus den Folien mit call-by-name Parameter:
+```scala
+def doInThread(body: => Unit): Thread =
+  val t = new Thread:
+    override def run() = body
+  t.start()
+  t
+
+// Aufruf
+val t = doInThread { println("Executed in new thread.") }
+```
+Wenn mehrere Threads auf die gleichen Speicherbereiche zugreifen, ist das Programmverhalten nicht mehr deterministisch.
+```scala
+var currId = 0L
+def generateUniqueId() =
+  val newId = currId + 1 // (1)
+  currId = newId // (2)
+  newId
+
+// Aufruf
+val t1 = doInThread { println(generateUniqueId()) }
+val t2 = doInThread { println(generateUniqueId()) }
+// Ausgabe: 1 2 oder 2 1 oder 1 1
+```
+Der Code funktioniert korrekt, wenn die Ausführung der Anweisungen (1) und (2) nicht durch den anderen Thread unterbrochen wird. `t1` und `t2` generieren jedoch die gleiche ID, wenn beide Threads gleichzeitig das Feld currId lesen. Man spricht von einer **Race Condition** in einem Programm, wenn die Ausgabe von der Ausführungsreihenfolge der Anweisungen abhängt.
+
+## Synchronisation
+- Jedes Java/Scala-Objekt besitzt eine spezielle Eigenschaft, die als *intrinsic lock* oder *Monitor* bezeichnet wird.
+- Nur ein Thread kann den Besitz eines Locks erlangen.
+- Wenn ein Thread versucht, den Lock zu erlangen, während ein anderer Thread den Lock besitzt, wird dieser Thread blockiert.
+- Wenn ein Thread die Anweisung ausführt:
+  ```scala
+  x.synchronized { /* Anweisungen */ }
+  ```
+  - versucht er die Sperre für `x` zu erlangen, die am Ende des Blocks wieder freigegeben wird
+  - der Thread wird blockiert, solange `x` von einem anderen Thread gesperrt ist
+- Die Race Condition im obrigen Beispiel kann durch Locken des von mehreren Threads zugegriffenen Bereichs beseitigt werden:
+```scala
+var currId = 0L
+def generateUniqueId() = this.synchronized
+  val newId = currId + 1
+  currId = newId
+  newId
+```
+
+## Data Races und Umreihung
+- Wie kann dieses Programm zu `x==1 && y==1` führen?
+  ```scala
+  var a = false
+  var b = false
+  var x = -1
+  var y = -1
+
+  val t1 = doInThread { 
+    a = true
+    y = if (b) 0 else 1
+  }
+
+  val t2 = doInThread {
+    b = true
+    x = if (a) 0 else 1
+  }
+
+  t1.join()
+  t2.join()
+
+  assert(!(x == 1 && y == 1))
+  ```
+- Es ist erforderlich, dass sowohl a als auch b false sind, um `x==1 && y==1` als Ergebnis zu erhalten.
+- Mögliche Gründe für dieses "anormale" Verhalten:
+  - Umreihung von Anweisungen: Diese Umordnung hat keine Auswirkung auf die serielle Semantik, beeinflusst aber das Verhalten bei nebenläufiger Ausführung
+  - Data Racee: Schreibzugriff eines Threads (im Cache) wird vom anderen Thread nicht gesehen
+- Das Schlüsselwort `synchronized` garantiert auch, dass Schreibzugriffe auf den Speicher eines Threads für alle anderen Threads sichtbar sind.
+
+## Deadlocks
+Synchronisation kann zu Deadlocks führen:
+```scala
+class Account(val name: String, var balance: Double);
+
+def transfer(amount: Double, a: Account, b: Account): Unit =
+  a.synchronized {
+    b.synchronized {
+      a.balance -= amount
+      b.balance += amount
+    }
+  }
+
+// Aufruf
+var t1 = doInThread {
+  for (i <- 0 until 1000) 
+    transfer(10, account1, account2)
+}
+
+var t2 = doInThread {
+  for (i <- 0 until 1000) 
+  transfer(10, account2, account1)
+}
+```
+Deadlocks können vermieden werden, wenn Ressourcen immer in der gleichen Reihenfolge gesperrt werden:
+```scala
+def transfer(amount: Double, a1: Account, a2: Account): Unit =
+  if (a1.name < a2.name)
+    a1.synchronized {
+      a2.synchronized { /* ... */ }
+    }
+  else
+    a2.synchronized {
+      a1.synchronized { /* ... */ }
+    }
+```
+- In der Praxis ist es jedoch schwierig, eine konsistente Ordnung von Ressourcen sicherzustellen.
