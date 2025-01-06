@@ -272,4 +272,3 @@ Currying ist besonders nützlich, wenn wir:
 - eine Funktion als Parameter an andere Funktionen übergeben möchten
 - Funktionen komponieren möchten
 
-### Type aliases
