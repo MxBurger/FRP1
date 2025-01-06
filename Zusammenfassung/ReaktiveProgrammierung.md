@@ -14,7 +14,7 @@
 - Ziel: Effiziente Interaktion mit mehreren externen Agenten ermöglichen
 - Nebenläufigkeit schließt Parallelität mit ein
 
-![assets/Concurrent.png](assets/Parallel.png)
+![assets/Concurrent.png](assets/Concurrent.png)
 
 **Im wesentlichen:**
 - Parallelität bezieht sich auf die tatsächlich gleichzeitige Ausführung von Aufgaben (z.B. auf mehreren Prozessorkernen)
@@ -48,3 +48,50 @@
 - Reaktionsfähigkeit (Responsiveness): Reagiert auf User *(User muss nicht Mensch sein)*
   - System muss Echtzeit-Interaktion mit Agents unter Last und bei Auftreten von Fehlern gewährleisten
   - Voraussetzungen: Nachrichtenbasierte Architektur, Elastizität, Resilienz
+
+## Herkömmliche Techniken für nebenläufige Programmierung
+- Low-Level-Konstrukte für nebenläufige Ausführungen:
+  - Prozesse
+  - Threads
+- Kommunikationsmittel:
+  - Gemeinsamer Speicher (Shared Memory) → Synchronisation erforderlich
+  - Nachrichtenaustausch (Message Passing) → verteilte Systeme
+- **Probleme:** Fehleranfällig und auf niedriger Abstraktionsebene
+  - Deadlocks
+  - Race Conditions
+  - Data Races
+  - Starvation
+
+Grundlegendes Wissen über Low-Level-Ansätze ist essentiell, um High-Level-Konzepte zu verstehen :smile:
+
+## Prozesse und Threads
+- Ein Prozess führt die Anweisungen eines Programms aus:
+  - Teilt sich CPU und andere Ressourcen mit anderen Prozessen
+  - Hat seinen eigenen Speicherbereich
+- Die Anweisungen eines Prozesses werden nebenläufig in mehreren Threads ausgeführt:
+  - Threads teilen sich den Speicher des Prozesses, zu dem sie gehören
+  - Threads kommunizieren durch Schreiben und Lesen im Speicher
+- Die Anweisungen eines Prozesses werden nebenläufig in mehreren Threads ausgeführt:
+  - Threads teilen sich den Speicher des Prozesses, zu dem sie gehören
+  - Threads kommunizieren durch Schreiben und Lesen im Speicher
+- Threads können auf verschiedenen Prozessoren (Kernen) ausgeführt werden:
+  - Prozessoren schreiben nicht direkt in den Hauptspeicher
+  - Sie nutzen Caches zur Verbesserung der Lese-/Schreib-Performance
+  - Ein Prozessor kann nicht auf den Cache eines anderen Prozessors zugreifen
+- Java-Threads werden direkt auf Betriebssystem-Threads abgebildet ( ab Java21 auch das Konzept von VirtualThreads, das bleibt jetzt aber außen vor)
+- Scala übernimmt das Thread-Modell von Java
+  
+![assets/MemoryAccess.png](assets/MemoryAccess.png)
+
+## Java Memory Model (JMM)
+- Scala übernimmt das Speichermodell von der JVM.
+- Das Speichermodell definiert, wann Schreibzugriffe auf eine Variable für andere Threads sichtbar sind.
+- Der Compiler und die Laufzeitumgebung führen verschiedene Optimierungen durch, um Performance zu gewinnen:
+  - Register können als Zwischenspeicher verwendet werden
+  - Daten können in Hierarchien von Caches geschrieben werden
+  - Bytecode-Anweisungen können umgeordnet werden
+- Die Regeln des JMM definieren, wie Threads über den Speicher interagieren:
+  - Programm-Reihenfolge (Program order): Programmoptimierungen durch den Compiler dürfen die serielle Semantik innerhalb eines Threads nicht verändern
+  - Locks: Sperren für die gleiche Synchronisationsvariable dürfen sich nicht überlappen
+  - Volatile fields: Ein Schreibzugriff auf ein volatiles Feld ist sofort für alle Threads sichtbar
+  - Thread-Start: Alle Aktionen in einem Thread werden nach dem Aufruf von start() ausgeführt
